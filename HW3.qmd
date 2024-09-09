@@ -1,0 +1,125 @@
+---
+title: "HW3"
+format: html
+---
+
+# Homework 3
+
+Read in R objects file
+```{r}
+load("hw2_list.rda")
+```
+
+## Task 1: Control Flow Practice
+
+1. Create status columns in the df's within bp_list
+```{r}
+bp_list$treatment$status <- character(dim(bp_list$treatment)[1])
+bp_list$placebo$status <- character(dim(bp_list$placebo)[1])
+```
+
+2. For loop to populate values of status column of treatment data frame
+- For each iteration, will store the post_bp value in val
+- If the value is not numeric or is missing, the loop will stop
+- Otherwise, status value will be assigned based on the specified range
+```{r}
+for (i in 1:dim(bp_list$treatment)[1]) {
+  val <- bp_list$treatment[i, "post_bp"]
+  bp_list$treatment[["status"]][i] <- 
+      if (is.na(val) | !is.numeric(val)) {
+        break
+      } else if (val <= 120) {
+        "optimal"
+      } else if (val <= 130) {
+        "borderline"
+      } else {
+        "high" # all val > 130
+      }
+}
+```
+
+3. For loop to populate values of status column of placebo data frame
+- Follows the same logic as step 2, just for placebo instead of treatment df
+```{r}
+for (i in 1:dim(bp_list$placebo)[1]) {
+  val <- bp_list$placebo[i, "post_bp"]
+  bp_list$placebo[["status"]][i] <- 
+      if (is.na(val) | !is.numeric(val)) {
+        break
+      } else if (val <= 120) {
+        "optimal"
+      } else if (val <= 130) {
+        "borderline"
+      } else {
+        "high" # all val > 130
+      }
+}
+```
+
+Printing results
+```{r}
+bp_list
+```
+
+## Task 2: Function Writing
+
+1. Custom function
+- arguments: list (2 df's), R function (default "mean")
+- performs the calculations of the R function in the argument (or the default "mean") for pre, post, and diff columns of the placebo and treatment df's
+- stores these results in vectors within a new list
+- assigns meaningful names that include the name of the statistic used on each of those vectors
+```{r}
+compute_stats <- function(df_list, stat_ = "mean") {
+  # retrieve function for specified statistic
+  stat_fun <- get(stat_)
+  
+  # create names vector 
+  stat_names <- c(paste("pre", stat_, sep="_"),
+                  paste("post", stat_, sep="_"),
+                  paste("diff", stat_, sep="_"))
+  
+  # initialize list to be returned
+  ret_list <- list(numeric(3), numeric(3))
+  
+  # assign names to the vectors in the new list from the old list
+  names(ret_list) <- names(bp_list)
+  
+  # apply names to the vectors within the list
+  names(ret_list[[1]]) <- stat_names
+  names(ret_list[[2]]) <- stat_names
+  
+  # go through 2 data frames in the input list and store calc in new vectors
+  for (i in 1:2){
+    for (j in 2:4){
+      ret_list[[i]][j-1] <- stat_fun(df_list[[i]][,j])
+    }
+  }
+  
+  return(ret_list)  
+}
+```
+
+Call function: no statistic specified
+```{r}
+compute_stats(bp_list)
+```
+
+Call function: var
+```{r}
+compute_stats(bp_list, "var")
+```
+Call function: sd
+```{r}
+compute_stats(bp_list, "sd")
+```
+
+Call function: min
+```{r}
+compute_stats(bp_list, "min")
+```
+
+Call function: max
+```{r}
+compute_stats(bp_list, "max")
+```
+
